@@ -67,15 +67,6 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ),
         centerTitle: true,
-        // leading: Padding(
-        //   padding: const EdgeInsets.only(left: 16),
-        //   child: Center(
-        //     child: Text(
-        //       TimeOfDay.now().format(context),
-        //       style: const TextStyle(color: Colors.white, fontSize: 12),
-        //     ),
-        //   ),
-        // ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
