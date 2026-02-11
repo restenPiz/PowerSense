@@ -93,15 +93,6 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ),
         centerTitle: true,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16),
-          child: Center(
-            child: Text(
-              TimeOfDay.now().format(context),
-              style: const TextStyle(color: Colors.white, fontSize: 12),
-            ),
-          ),
-        ),
         actions: [
           // Botão de logout
           IconButton(
@@ -110,27 +101,27 @@ class _MainScreenState extends State<MainScreen> {
             tooltip: 'Sair',
           ),
           // Bateria
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Center(
-              child: Container(
-                width: 20,
-                height: 14,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.white, width: 1.5),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: const BoxDecoration(color: Colors.white),
-                  ),
-                ),
-              ),
-            ),
-          ),
+          // Padding(
+          //   padding: const EdgeInsets.only(right: 16),
+          //   child: Center(
+          //     child: Container(
+          //       width: 20,
+          //       height: 14,
+          //       decoration: BoxDecoration(
+          //         border: Border.all(color: Colors.white, width: 1.5),
+          //         borderRadius: BorderRadius.circular(2),
+          //       ),
+          //       child: Align(
+          //         alignment: Alignment.centerLeft,
+          //         child: Container(
+          //           width: 10,
+          //           height: 10,
+          //           decoration: const BoxDecoration(color: Colors.white),
+          //         ),
+          //       ),
+          //     ),
+          //   ),
+          // ),
         ],
       ),
       body: _screens[_selectedIndex],
