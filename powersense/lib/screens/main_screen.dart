@@ -100,28 +100,6 @@ class _MainScreenState extends State<MainScreen> {
             onPressed: _handleLogout,
             tooltip: 'Sair',
           ),
-          // Bateria
-          // Padding(
-          //   padding: const EdgeInsets.only(right: 16),
-          //   child: Center(
-          //     child: Container(
-          //       width: 20,
-          //       height: 14,
-          //       decoration: BoxDecoration(
-          //         border: Border.all(color: Colors.white, width: 1.5),
-          //         borderRadius: BorderRadius.circular(2),
-          //       ),
-          //       child: Align(
-          //         alignment: Alignment.centerLeft,
-          //         child: Container(
-          //           width: 10,
-          //           height: 10,
-          //           decoration: const BoxDecoration(color: Colors.white),
-          //         ),
-          //       ),
-          //     ),
-          //   ),
-          // ),
         ],
       ),
       body: _screens[_selectedIndex],
