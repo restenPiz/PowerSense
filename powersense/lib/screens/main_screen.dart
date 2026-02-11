@@ -68,7 +68,7 @@ class _MainScreenState extends State<MainScreen> {
     if (confirmed == true && mounted) {
       // Fazer logout
       await ApiService.logout();
-      
+
       // Navegar para tela de login
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
@@ -83,7 +83,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1F1F1F),
+        backgroundColor: const Color(0xFF0066CC),
         title: const Text(
           'PowerSense',
           style: TextStyle(
@@ -125,9 +125,7 @@ class _MainScreenState extends State<MainScreen> {
                   child: Container(
                     width: 10,
                     height: 10,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                    ),
+                    decoration: const BoxDecoration(color: Colors.white),
                   ),
                 ),
               ),
