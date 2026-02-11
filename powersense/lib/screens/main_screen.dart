@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'auth/login_screen.dart';
+import 'main/home_screen.dart';
+import 'main/analytics_screen.dart';
+import 'main/recharge_screen.dart';
+import 'main/settings_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -10,8 +14,15 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  int _selectedIndex = 0;
   Map<String, dynamic>? contadorData;
-  bool isLoading = true;
+
+  final List<Widget> _screens = [
+    const HomeScreen(),
+    const AnalyticsScreen(),
+    const RechargeScreen(),
+    const SettingsScreen(),
+  ];
 
   @override
   void initState() {
@@ -21,196 +32,149 @@ class _MainScreenState extends State<MainScreen> {
 
   Future<void> _loadContadorData() async {
     final data = await ApiService.getContadorData();
+    if (mounted) {
+      setState(() {
+        contadorData = data;
+      });
+    }
+  }
+
+  void _onItemTapped(int index) {
     setState(() {
-      contadorData = data;
-      isLoading = false;
+      _selectedIndex = index;
     });
   }
 
   Future<void> _handleLogout() async {
-    final result = await ApiService.logout();
-    
-    if (result['success'] && mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
+    // Mostrar diálogo de confirmação
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sair'),
+        content: const Text('Tem certeza que deseja sair?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Sair'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      // Fazer logout
+      await ApiService.logout();
+      
+      // Navegar para tela de login
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0066CC),
+        backgroundColor: const Color(0xFF1F1F1F),
         title: const Text(
           'PowerSense',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: _handleLogout,
-            tooltip: 'Sair',
-          ),
-        ],
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              const Color(0xFF0066CC).withOpacity(0.1),
-              Colors.white,
-            ],
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
           ),
         ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Ícone de sucesso
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.check_circle,
-                    size: 60,
-                    color: Colors.green.shade600,
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                // Mensagem de boas-vindas
-                Text(
-                  'Bem-vindo!',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade800,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Informações do contador
-                if (contadorData != null) ...[
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        _buildInfoRow(
-                          Icons.numbers,
-                          'Contador',
-                          contadorData!['numero_contador'] ?? 'N/A',
-                        ),
-                        const Divider(height: 24),
-                        _buildInfoRow(
-                          Icons.person,
-                          'Proprietário',
-                          contadorData!['nome_proprietario'] ?? 'N/A',
-                        ),
-                        const Divider(height: 24),
-                        _buildInfoRow(
-                          Icons.location_on,
-                          'Endereço',
-                          contadorData!['endereco'] ?? 'N/A',
-                        ),
-                        const Divider(height: 24),
-                        _buildInfoRow(
-                          Icons.battery_charging_full,
-                          'Saldo',
-                          '${contadorData!['saldo_kwh'] ?? 0} kWh',
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Nota
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.blue.shade200),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.info_outline, color: Colors.blue.shade700),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Esta é uma tela temporária. As telas principais do app serão integradas aqui.',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.blue.shade900,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
+        centerTitle: true,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: Center(
+            child: Text(
+              TimeOfDay.now().format(context),
+              style: const TextStyle(color: Colors.white, fontSize: 12),
             ),
           ),
         ),
+        actions: [
+          // Botão de logout
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white, size: 20),
+            onPressed: _handleLogout,
+            tooltip: 'Sair',
+          ),
+          // Bateria
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Center(
+              child: Container(
+                width: 20,
+                height: 14,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.white, width: 1.5),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    width: 10,
+                    height: 10,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(icon, color: const Color(0xFF0066CC), size: 24),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade800,
-                ),
-              ),
-            ],
+      body: _screens[_selectedIndex],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(color: Colors.grey.shade200, width: 1),
           ),
         ),
-      ],
+        child: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
+          selectedItemColor: const Color(0xFF0066CC),
+          unselectedItemColor: Colors.grey.shade500,
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: 'Início',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.bar_chart_outlined),
+              activeIcon: Icon(Icons.bar_chart),
+              label: 'Análise',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.credit_card_outlined),
+              activeIcon: Icon(Icons.credit_card),
+              label: 'Recarga',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings_outlined),
+              activeIcon: Icon(Icons.settings),
+              label: 'Config',
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

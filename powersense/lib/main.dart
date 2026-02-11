@@ -29,7 +29,7 @@ class PowerSenseApp extends StatelessWidget {
           fillColor: Colors.grey.shade50,
         ),
       ),
-      home: const SplashScreen(),
+      home: const SplashScreen(), // Começa com splash que verifica autenticação
     );
   }
 }
