@@ -44,13 +44,23 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadDashboardData() async {
     try {
       final result = await ApiService.getDashboard();
+      print('DEBUG Home Dashboard result: $result');
 
       if (result['success'] && mounted) {
         final data = result['data'];
+        print('DEBUG Home data: $data');
+
+        final kwhBalance = _parseDouble(data['saldo']['kwh']);
+        final consumoHojeValue = _parseDouble(data['consumo']['hoje']);
+
+        print(
+          'DEBUG kwhBalance: $kwhBalance, consumoHojeValue: $consumoHojeValue',
+        );
+
         setState(() {
-          balance = (data['saldo']['kwh'] ?? 0).toDouble();
+          balance = kwhBalance;
           daysRemaining = data['saldo']['dias_estimados'] ?? 0;
-          consumoHoje = (data['consumo']['hoje'] ?? 0).toDouble();
+          consumoHoje = consumoHojeValue;
 
           // Calcular potência atual aproximada (simulado por agora)
           // Em produção, isso viria de um medidor em tempo real
@@ -60,12 +70,15 @@ class _HomeScreenState extends State<HomeScreen> {
           errorMessage = null;
         });
       } else {
+        final errorMsg = result['message'] ?? 'Erro ao carregar dados';
+        print('DEBUG Home error: $errorMsg');
         setState(() {
           isLoading = false;
-          errorMessage = result['message'] ?? 'Erro ao carregar dados';
+          errorMessage = errorMsg;
         });
       }
     } catch (e) {
+      print('DEBUG Home exception: $e');
       if (mounted) {
         setState(() {
           isLoading = false;
@@ -78,6 +91,22 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Pull to refresh
   Future<void> _handleRefresh() async {
     await _loadDashboardData();
+  }
+
+  /// Converter valor para double
+  double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) {
+      try {
+        return double.parse(value);
+      } catch (e) {
+        print('DEBUG: Failed to parse double from "$value": $e');
+        return 0.0;
+      }
+    }
+    return 0.0;
   }
 
   @override
