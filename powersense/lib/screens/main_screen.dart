@@ -68,7 +68,7 @@ class _MainScreenState extends State<MainScreen> {
     if (confirmed == true && mounted) {
       // Fazer logout
       await ApiService.logout();
-
+      
       // Navegar para tela de login
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
@@ -83,7 +83,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0066CC),
+        backgroundColor: const Color(0xFF1F1F1F),
         title: const Text(
           'PowerSense',
           style: TextStyle(
@@ -93,12 +93,45 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ),
         centerTitle: true,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: Center(
+            child: Text(
+              TimeOfDay.now().format(context),
+              style: const TextStyle(color: Colors.white, fontSize: 12),
+            ),
+          ),
+        ),
         actions: [
           // Botão de logout
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white, size: 20),
             onPressed: _handleLogout,
             tooltip: 'Sair',
+          ),
+          // Bateria
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Center(
+              child: Container(
+                width: 20,
+                height: 14,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.white, width: 1.5),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    width: 10,
+                    height: 10,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),

@@ -7,7 +7,7 @@ class ApiService {
   // Para Android Emulator: use 10.0.2.2
   // Para iOS Simulator: use localhost
   // Para dispositivo físico: use o IP da máquina (ex: 192.168.1.100)
-  static const String baseUrl = 'http://10.122.161.12:8000/api';
+  static const String baseUrl = 'http://10.29.154.12:8000/api';
 
   // Headers padrão
   static Map<String, String> get headers => {

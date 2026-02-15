@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'dart:math';
+import '../services/api_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -10,72 +10,293 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  double balance = 156.5;
-  double currentPower = 2.3;
-  int daysRemaining = 12;
-  Timer? _timer;
+  // Dados do dashboard
+  double balance = 0.0;
+  double currentPower = 0.0;
+  int daysRemaining = 0;
+  double consumoHoje = 0.0;
+  
+  // Estados de loading
+  bool isLoading = true;
+  String? errorMessage;
+  
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
-    // Simulate real-time power consumption
-    _timer = Timer.periodic(const Duration(seconds: 2), (timer) {
-      setState(() {
-        currentPower = max(0.5, min(5.0, currentPower + (Random().nextDouble() - 0.5) * 0.3));
-      });
+    _loadDashboardData();
+    
+    // Refresh automático a cada 30 segundos
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      _loadDashboardData();
     });
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _refreshTimer?.cancel();
     super.dispose();
+  }
+
+  /// Carregar dados do dashboard da API
+  Future<void> _loadDashboardData() async {
+    try {
+      final result = await ApiService.getDashboard();
+      
+      if (result['success'] && mounted) {
+        final data = result['data'];
+        setState(() {
+          balance = (data['saldo']['kwh'] ?? 0).toDouble();
+          daysRemaining = data['saldo']['dias_estimados'] ?? 0;
+          consumoHoje = (data['consumo']['hoje'] ?? 0).toDouble();
+          
+          // Calcular potência atual aproximada (simulado por agora)
+          // Em produção, isso viria de um medidor em tempo real
+          currentPower = consumoHoje / 24; // kW médio do dia
+          
+          isLoading = false;
+          errorMessage = null;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+          errorMessage = result['message'] ?? 'Erro ao carregar dados';
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+          errorMessage = 'Erro de conexão: ${e.toString()}';
+        });
+      }
+    }
+  }
+
+  /// Pull to refresh
+  Future<void> _handleRefresh() async {
+    await _loadDashboardData();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.grey.shade50,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Alert Banner
-            if (balance < 200)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
-                  border: Border(
-                    left: BorderSide(color: Colors.orange.shade500, width: 4),
-                  ),
-                  borderRadius: const BorderRadius.only(
-                    topRight: Radius.circular(8),
-                    bottomRight: Radius.circular(8),
+    // Tela de loading
+    if (isLoading) {
+      return Container(
+        color: Colors.grey.shade50,
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    // Tela de erro
+    if (errorMessage != null) {
+      return Container(
+        color: Colors.grey.shade50,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+                const SizedBox(height: 16),
+                Text(
+                  'Erro ao carregar dados',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade800,
                   ),
                 ),
-                child: Row(
+                const SizedBox(height: 8),
+                Text(
+                  errorMessage!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: _loadDashboardData,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Tentar Novamente'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0066CC),
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Tela principal com dados
+    return Container(
+      color: Colors.grey.shade50,
+      child: RefreshIndicator(
+        onRefresh: _handleRefresh,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Alert Banner
+              if (balance < 200)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    border: Border(
+                      left: BorderSide(color: Colors.orange.shade500, width: 4),
+                    ),
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(8),
+                      bottomRight: Radius.circular(8),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.warning_amber_rounded, color: Colors.orange.shade500, size: 24),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Saldo baixo!',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.orange.shade800,
+                              ),
+                            ),
+                            Text(
+                              'Recomendamos recarregar em breve',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.orange.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 24),
+
+              // Main Balance Card
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0066CC), Color(0xFF004C99)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blue.withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.warning_amber_rounded, color: Colors.orange.shade500, size: 24),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Saldo baixo!',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: Colors.orange.shade800,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.battery_charging_full, color: Colors.white, size: 24),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Saldo Disponível',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 14,
+                              ),
                             ),
+                          ],
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.refresh, color: Colors.white.withOpacity(0.75), size: 20),
+                          onPressed: _loadDashboardData,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      '${balance.toStringAsFixed(1)} kWh',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 48,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(Icons.access_time, color: Colors.white.withOpacity(0.9), size: 16),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Estimativa: $daysRemaining dias restantes',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 13,
                           ),
-                          Text(
-                            'Recomendamos recarregar em breve',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.orange.shade700,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Consumo Hoje',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${consumoHoje.toStringAsFixed(1)} kWh',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.3),
+                              shape: BoxShape.circle,
                             ),
+                            child: const Icon(Icons.bolt, color: Colors.white, size: 24),
                           ),
                         ],
                       ),
@@ -83,187 +304,93 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            // Main Balance Card
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF0066CC), Color(0xFF004C99)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.blue.withOpacity(0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
+              // Quick Actions
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildQuickActionButton(
+                      icon: Icons.credit_card,
+                      title: 'Inserir Código',
+                      subtitle: 'Adicionar recarga',
+                      color: const Color(0xFF0066CC),
+                      onTap: () {
+                        // Mudar para tab de recarga (index 2)
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildQuickActionButton(
+                      icon: Icons.bar_chart,
+                      title: 'Ver Análises',
+                      subtitle: 'Gráficos',
+                      color: Colors.grey.shade600,
+                      outlined: true,
+                      onTap: () {
+                        // Mudar para tab de analytics (index 1)
+                      },
+                    ),
                   ),
                 ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.battery_charging_full, color: Colors.white, size: 24),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Saldo Disponível',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Icon(Icons.notifications_outlined, color: Colors.white.withOpacity(0.75), size: 20),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    '${balance.toStringAsFixed(1)} kWh',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
+              const SizedBox(height: 24),
+
+              // Energy Saving Tips
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.shade100),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(Icons.access_time, color: Colors.white.withOpacity(0.9), size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Estimativa: $daysRemaining dias restantes',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Consumo Atual',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${currentPower.toStringAsFixed(1)} kW',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.3),
-                            shape: BoxShape.circle,
+                        Icon(Icons.trending_up, color: Colors.green.shade600, size: 20),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Dicas de Economia',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
                           ),
-                          child: const Icon(Icons.bolt, color: Colors.white, size: 24),
                         ),
                       ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    _buildTip('💡', 'Desligue aparelhos em standby - economize até 15% por mês'),
+                    const SizedBox(height: 12),
+                    _buildTip('❄️', 'Seu ar condicionado consome 45% da sua energia'),
+                    const SizedBox(height: 12),
+                    _buildTip('⏰', 'Pico de consumo às 19h - considere usar aparelhos depois das 22h'),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-
-            // Quick Actions
-            Row(
-              children: [
-                Expanded(
-                  child: _buildQuickActionButton(
-                    icon: Icons.credit_card,
-                    title: 'Inserir Código',
-                    subtitle: 'Adicionar recarga',
-                    color: const Color(0xFF0066CC),
-                    onTap: () {},
+              
+              // Última atualização
+              const SizedBox(height: 16),
+              Center(
+                child: Text(
+                  'Última atualização: ${TimeOfDay.now().format(context)}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade500,
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildQuickActionButton(
-                    icon: Icons.notifications_outlined,
-                    title: 'Alertas',
-                    subtitle: 'Configurar avisos',
-                    color: Colors.grey.shade600,
-                    outlined: true,
-                    onTap: () {},
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Energy Saving Tips
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade100),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.trending_up, color: Colors.green.shade600, size: 20),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Dicas de Economia',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _buildTip('💡', 'Desligue aparelhos em standby - economize até 15% por mês'),
-                  const SizedBox(height: 12),
-                  _buildTip('❄️', 'Seu ar condicionado consome 45% da sua energia'),
-                  const SizedBox(height: 12),
-                  _buildTip('⏰', 'Pico de consumo às 19h - considere usar aparelhos depois das 22h'),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
