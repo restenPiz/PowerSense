@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../services/api_service.dart';
+
+import 'package:powersense/services/api_service.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
@@ -33,7 +34,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     try {
       // Buscar consumo semanal
       final resultSemanal = await ApiService.getConsumoSemanal();
-      
+
       // Buscar dashboard para estatísticas gerais
       final resultDashboard = await ApiService.getDashboard();
 
@@ -50,13 +51,18 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         }).toList();
 
         // Calcular totais
-        double total = parsedData.fold(0.0, (sum, item) => sum + (item['kwh'] as double));
+        double total = parsedData.fold(
+          0.0,
+          (sum, item) => sum + (item['kwh'] as double),
+        );
         double media = total / parsedData.length;
 
         // Dados mensais (simulados por agora - em produção viria da API)
         // TODO: Adicionar endpoint para comparação mensal no Laravel
-        double mesAtualCalc = dashboardData['estatisticas']['total_kwh_recarregado'] ?? 0.0;
-        double mesAnteriorCalc = mesAtualCalc * 1.08; // 8% a mais no mês anterior
+        double mesAtualCalc =
+            dashboardData['estatisticas']['total_kwh_recarregado'] ?? 0.0;
+        double mesAnteriorCalc =
+            mesAtualCalc * 1.08; // 8% a mais no mês anterior
 
         setState(() {
           consumptionData = parsedData;
@@ -92,9 +98,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     if (isLoading) {
       return Container(
         color: Colors.grey.shade50,
-        child: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        child: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -123,10 +127,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   Text(
                     errorMessage!,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                   ),
                 ],
                 const SizedBox(height: 24),
@@ -163,7 +164,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               // Header
               Row(
                 children: [
-                  Icon(Icons.bar_chart, color: const Color(0xFF0066CC), size: 28),
+                  Icon(
+                    Icons.bar_chart,
+                    color: const Color(0xFF0066CC),
+                    size: 28,
+                  ),
                   const SizedBox(width: 12),
                   const Text(
                     'Análise de Consumo',
@@ -210,7 +215,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     ),
                     const SizedBox(height: 16),
                     ...consumptionData.map((day) {
-                      final percentage = (day['kwh'] as double) / maxConsumption;
+                      final percentage =
+                          (day['kwh'] as double) / maxConsumption;
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: Row(
@@ -242,7 +248,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                                       height: 32,
                                       decoration: BoxDecoration(
                                         gradient: const LinearGradient(
-                                          colors: [Color(0xFF3B82F6), Color(0xFF2563EB)],
+                                          colors: [
+                                            Color(0xFF3B82F6),
+                                            Color(0xFF2563EB),
+                                          ],
                                         ),
                                         borderRadius: BorderRadius.circular(16),
                                       ),
@@ -439,7 +448,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.access_time, color: Colors.orange.shade600, size: 20),
+                        Icon(
+                          Icons.access_time,
+                          color: Colors.orange.shade600,
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                         const Text(
                           'Horários de Pico',
@@ -453,7 +466,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     const SizedBox(height: 16),
                     _buildPeakHour('18h - 21h', 'Alto', Colors.orange.shade500),
                     const SizedBox(height: 8),
-                    _buildPeakHour('06h - 09h', 'Médio', Colors.yellow.shade600),
+                    _buildPeakHour(
+                      '06h - 09h',
+                      'Médio',
+                      Colors.yellow.shade600,
+                    ),
                     const SizedBox(height: 8),
                     _buildPeakHour('22h - 06h', 'Baixo', Colors.green.shade500),
                   ],
@@ -465,10 +482,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               Center(
                 child: Text(
                   'Dados atualizados em tempo real',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade500,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                 ),
               ),
             ],
@@ -482,13 +496,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          time,
-          style: TextStyle(
-            fontSize: 13,
-            color: Colors.grey.shade700,
-          ),
-        ),
+        Text(time, style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(

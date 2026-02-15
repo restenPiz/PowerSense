@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../services/api_service.dart';
+import 'package:powersense/services/api_service.dart';
 
 class RechargeScreen extends StatefulWidget {
   const RechargeScreen({super.key});

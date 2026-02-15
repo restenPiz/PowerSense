@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import '../services/api_service.dart';
+
+import 'package:powersense/services/api_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,18 +16,18 @@ class _HomeScreenState extends State<HomeScreen> {
   double currentPower = 0.0;
   int daysRemaining = 0;
   double consumoHoje = 0.0;
-  
+
   // Estados de loading
   bool isLoading = true;
   String? errorMessage;
-  
+
   Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     _loadDashboardData();
-    
+
     // Refresh automático a cada 30 segundos
     _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       _loadDashboardData();
@@ -43,18 +44,18 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadDashboardData() async {
     try {
       final result = await ApiService.getDashboard();
-      
+
       if (result['success'] && mounted) {
         final data = result['data'];
         setState(() {
           balance = (data['saldo']['kwh'] ?? 0).toDouble();
           daysRemaining = data['saldo']['dias_estimados'] ?? 0;
           consumoHoje = (data['consumo']['hoje'] ?? 0).toDouble();
-          
+
           // Calcular potência atual aproximada (simulado por agora)
           // Em produção, isso viria de um medidor em tempo real
           currentPower = consumoHoje / 24; // kW médio do dia
-          
+
           isLoading = false;
           errorMessage = null;
         });
@@ -85,9 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (isLoading) {
       return Container(
         color: Colors.grey.shade50,
-        child: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        child: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -115,10 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(
                   errorMessage!,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
@@ -164,7 +160,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.warning_amber_rounded, color: Colors.orange.shade500, size: 24),
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.orange.shade500,
+                        size: 24,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -218,7 +218,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.battery_charging_full, color: Colors.white, size: 24),
+                            const Icon(
+                              Icons.battery_charging_full,
+                              color: Colors.white,
+                              size: 24,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               'Saldo Disponível',
@@ -230,7 +234,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                         IconButton(
-                          icon: Icon(Icons.refresh, color: Colors.white.withOpacity(0.75), size: 20),
+                          icon: Icon(
+                            Icons.refresh,
+                            color: Colors.white.withOpacity(0.75),
+                            size: 20,
+                          ),
                           onPressed: _loadDashboardData,
                         ),
                       ],
@@ -247,7 +255,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(Icons.access_time, color: Colors.white.withOpacity(0.9), size: 16),
+                        Icon(
+                          Icons.access_time,
+                          color: Colors.white.withOpacity(0.9),
+                          size: 16,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           'Estimativa: $daysRemaining dias restantes',
@@ -296,7 +308,11 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: Colors.white.withOpacity(0.3),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.bolt, color: Colors.white, size: 24),
+                            child: const Icon(
+                              Icons.bolt,
+                              color: Colors.white,
+                              size: 24,
+                            ),
                           ),
                         ],
                       ),
@@ -357,7 +373,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.trending_up, color: Colors.green.shade600, size: 20),
+                        Icon(
+                          Icons.trending_up,
+                          color: Colors.green.shade600,
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                         const Text(
                           'Dicas de Economia',
@@ -369,24 +389,30 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    _buildTip('💡', 'Desligue aparelhos em standby - economize até 15% por mês'),
+                    _buildTip(
+                      '💡',
+                      'Desligue aparelhos em standby - economize até 15% por mês',
+                    ),
                     const SizedBox(height: 12),
-                    _buildTip('❄️', 'Seu ar condicionado consome 45% da sua energia'),
+                    _buildTip(
+                      '❄️',
+                      'Seu ar condicionado consome 45% da sua energia',
+                    ),
                     const SizedBox(height: 12),
-                    _buildTip('⏰', 'Pico de consumo às 19h - considere usar aparelhos depois das 22h'),
+                    _buildTip(
+                      '⏰',
+                      'Pico de consumo às 19h - considere usar aparelhos depois das 22h',
+                    ),
                   ],
                 ),
               ),
-              
+
               // Última atualização
               const SizedBox(height: 16),
               Center(
                 child: Text(
                   'Última atualização: ${TimeOfDay.now().format(context)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade500,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                 ),
               ),
             ],
@@ -431,10 +457,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             Text(
               subtitle,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey.shade500,
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
             ),
           ],
         ),
@@ -457,10 +480,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: Text(
               text,
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade700,
-              ),
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
             ),
           ),
         ],

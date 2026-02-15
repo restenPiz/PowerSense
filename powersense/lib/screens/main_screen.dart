@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
+import 'package:powersense/services/api_service.dart';
 import 'auth/login_screen.dart';
 import 'main/home_screen.dart';
 import 'main/analytics_screen.dart';
@@ -68,7 +68,7 @@ class _MainScreenState extends State<MainScreen> {
     if (confirmed == true && mounted) {
       // Fazer logout
       await ApiService.logout();
-      
+
       // Navegar para tela de login
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
@@ -125,9 +125,7 @@ class _MainScreenState extends State<MainScreen> {
                   child: Container(
                     width: 10,
                     height: 10,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                    ),
+                    decoration: const BoxDecoration(color: Colors.white),
                   ),
                 ),
               ),
