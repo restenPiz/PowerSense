@@ -83,7 +83,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1F1F1F),
+        backgroundColor: const Color(0xFF0066CC),
         title: const Text(
           'PowerSense',
           style: TextStyle(
