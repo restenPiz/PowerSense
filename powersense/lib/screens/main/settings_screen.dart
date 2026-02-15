@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:powersense/services/api_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -11,6 +12,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _lowBalanceAlert = true;
   bool _highConsumptionAlert = true;
   bool _savingTips = true;
+
+  Map<String, dynamic>? contadorData;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadContadorData();
+  }
+
+  Future<void> _loadContadorData() async {
+    final data = await ApiService.me();
+    if (mounted) {
+      setState(() {
+        contadorData = data;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +80,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                   ),
                   const SizedBox(height: 16),
-                  _buildInfoItem('Número do Contador', '04-123456789'),
+                  _buildInfoItem(
+                    'Número do Contador',
+                    contadorData?['nome_proprietario'] ?? 'N/A',
+                  ),
                   const SizedBox(height: 12),
                   _buildInfoItem('Nome do Titular', 'João Silva'),
                   const SizedBox(height: 12),
