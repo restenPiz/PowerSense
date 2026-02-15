@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:powersense/screens/main/analytics_screen.dart';
+import 'package:powersense/screens/main/recharge_screen.dart';
 import 'dart:async';
 
 import 'package:powersense/services/api_service.dart';
@@ -361,7 +363,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       subtitle: 'Adicionar recarga',
                       color: const Color(0xFF0066CC),
                       onTap: () {
-                        // Mudar para tab de recarga (index 2)
+                        // Navegar para tela de recarga
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const RechargeScreen(),
+                          ),
+                        );
                       },
                     ),
                   ),
@@ -375,6 +382,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       outlined: true,
                       onTap: () {
                         // Mudar para tab de analytics (index 1)
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const AnalyticsScreen(),
+                          ),
+                        );
                       },
                     ),
                   ),
