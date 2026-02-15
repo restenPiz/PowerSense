@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:powersense/services/api_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -12,8 +13,63 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _highConsumptionAlert = true;
   bool _savingTips = true;
 
+  Map<String, dynamic>? userData;
+  bool isLoading = true;
+  String? errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      final result = await ApiService.me();
+      print('DEBUG Settings me() result: $result');
+
+      if (result['success'] && mounted) {
+        final data = result['data'];
+        print('DEBUG Settings userData: $data');
+
+        setState(() {
+          userData = data;
+          isLoading = false;
+        });
+      } else {
+        final errorMsg = result['message'] ?? 'Erro ao carregar dados';
+        print('DEBUG Settings error: $errorMsg');
+        setState(() {
+          isLoading = false;
+          errorMessage = errorMsg;
+        });
+      }
+    } catch (e) {
+      print('DEBUG Settings exception: $e');
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+          errorMessage = 'Erro de conexão: ${e.toString()}';
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Loading state
+    if (isLoading) {
+      return Container(
+        color: Colors.grey.shade50,
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Container(
       color: Colors.grey.shade50,
       child: SingleChildScrollView(
@@ -21,12 +77,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Error message display
+            if (errorMessage != null) ...[
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.red.shade300),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      color: Colors.red.shade600,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        errorMessage!,
+                        style: TextStyle(
+                          color: Colors.red.shade600,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+
             // Header
-            Row(
+            const Row(
               children: [
                 Icon(Icons.settings, color: const Color(0xFF0066CC), size: 28),
-                const SizedBox(width: 12),
-                const Text(
+                SizedBox(width: 12),
+                Text(
                   'Configurações',
                   style: TextStyle(
                     fontSize: 24,
@@ -41,6 +129,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             // Account Information
             Container(
               padding: const EdgeInsets.all(20),
+              width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
@@ -58,17 +147,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   const Text(
                     'Informações da Conta',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                   ),
                   const SizedBox(height: 16),
-                  _buildInfoItem('Número do Contador', '04-123456789'),
+                  _buildInfoItem(
+                    'Número do Contador',
+                    userData?['numero_contador'] ?? 'Carregando...',
+                  ),
                   const SizedBox(height: 12),
-                  _buildInfoItem('Nome do Titular', 'João Silva'),
+                  _buildInfoItem(
+                    'Nome do Titular',
+                    userData?['nome_proprietario'] ?? 'Carregando...',
+                  ),
                   const SizedBox(height: 12),
-                  _buildInfoItem('Endereço', 'Av. Julius Nyerere, Maputo'),
+                  _buildInfoItem(
+                    'Endereço',
+                    userData?['endereco'] ?? 'Carregando...',
+                  ),
                 ],
               ),
             ),
@@ -94,10 +189,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   const Text(
                     'Notificações',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                   ),
                   const SizedBox(height: 16),
                   _buildNotificationToggle(
@@ -157,10 +249,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   const Text(
                     'Suporte',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                   ),
                   const SizedBox(height: 16),
                   _buildSupportButton(
@@ -194,18 +283,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   Text(
                     'PowerSense v1.0.0',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade500,
-                    ),
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '© 2026 PowerSense Moçambique',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade400,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
                   ),
                 ],
               ),
@@ -223,10 +306,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey.shade500,
-          ),
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
         ),
         const SizedBox(height: 4),
         Text(
@@ -263,10 +343,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 4),
               Text(
                 subtitle,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade500,
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
               ),
             ],
           ),
@@ -313,10 +390,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade500,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                   ),
                 ],
               ),
