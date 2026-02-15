@@ -219,19 +219,27 @@ class ApiService {
   /// Obter histórico de recargas
   static Future<Map<String, dynamic>> getRecargas({int page = 1}) async {
     try {
+      final url = '$baseUrl/recargas?page=$page';
+      print('DEBUG API: Fetching recargas from $url');
+
       final response = await http.get(
-        Uri.parse('$baseUrl/recargas?page=$page'),
+        Uri.parse(url),
         headers: await authHeaders,
       );
+
+      print('DEBUG API: Response status: ${response.statusCode}');
+      print('DEBUG API: Response body: ${response.body}');
 
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
+        print('DEBUG API: Returning data: ${data['data']}');
         return {'success': true, 'data': data['data']};
       } else {
         return {'success': false, 'message': 'Erro ao carregar recargas'};
       }
     } catch (e) {
+      print('DEBUG API: Exception in getRecargas: $e');
       return {'success': false, 'message': 'Erro de conexão: ${e.toString()}'};
     }
   }

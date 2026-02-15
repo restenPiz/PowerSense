@@ -39,37 +39,64 @@ class _RechargeScreenState extends State<RechargeScreen> {
 
     try {
       final result = await ApiService.getRecargas();
+      print('DEBUG getRecargas result: $result');
 
       if (result['success'] && mounted) {
         final data = result['data'];
+        print('DEBUG data type: ${data.runtimeType}');
+        print('DEBUG data content: $data');
 
         // Parsing dos dados da API
         List<Map<String, dynamic>> parsedRecharges = [];
 
-        if (data['data'] != null && data['data'] is List) {
-          parsedRecharges = (data['data'] as List).map((item) {
+        // Handle both direct list and paginated response
+        List<dynamic> rechargesList = [];
+
+        if (data is List) {
+          // If data is directly a list
+          print('DEBUG: data is a List');
+          rechargesList = data;
+        } else if (data is Map &&
+            data['data'] != null &&
+            data['data'] is List) {
+          // If data is paginated response with nested 'data' field
+          print('DEBUG: data is a Map with nested data List');
+          rechargesList = data['data'];
+        } else {
+          print('DEBUG: data is neither List nor Map with data field');
+        }
+
+        print('DEBUG rechargesList length: ${rechargesList.length}');
+
+        if (rechargesList.isNotEmpty) {
+          parsedRecharges = rechargesList.map((item) {
             return {
               'id': item['id'],
               'date': _formatDate(item['data_recarga']),
-              'amount': (item['valor_mt'] ?? 0).toDouble(),
-              'kwh': (item['kwh'] ?? 0).toDouble(),
+              'amount': _parseDouble(item['valor_mt']),
+              'kwh': _parseDouble(item['kwh']),
               'code': _maskCode(item['codigo_recarga'] ?? ''),
               'status': item['status'] ?? 'confirmado',
             };
           }).toList();
         }
 
+        print('DEBUG parsedRecharges: $parsedRecharges');
+
         setState(() {
           recentRecharges = parsedRecharges;
           isLoading = false;
         });
       } else {
+        final message = result['message'] ?? 'Erro ao carregar histórico';
+        print('DEBUG error message: $message');
         setState(() {
           isLoading = false;
-          errorMessage = result['message'] ?? 'Erro ao carregar histórico';
+          errorMessage = message;
         });
       }
     } catch (e) {
+      print('DEBUG exception: $e');
       if (mounted) {
         setState(() {
           isLoading = false;
@@ -148,6 +175,22 @@ class _RechargeScreenState extends State<RechargeScreen> {
     } catch (e) {
       return dateStr;
     }
+  }
+
+  /// Converter valor para double
+  double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) {
+      try {
+        return double.parse(value);
+      } catch (e) {
+        print('DEBUG: Failed to parse double from "$value": $e');
+        return 0.0;
+      }
+    }
+    return 0.0;
   }
 
   /// Mascarar código de recarga
@@ -230,6 +273,37 @@ class _RechargeScreenState extends State<RechargeScreen> {
                 ],
               ),
               const SizedBox(height: 24),
+
+              // Error Message Display
+              if (errorMessage != null)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.red.shade300),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        color: Colors.red.shade600,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          errorMessage!,
+                          style: TextStyle(
+                            color: Colors.red.shade600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (errorMessage != null) const SizedBox(height: 24),
 
               // Insert Code Card
               Container(

@@ -34,19 +34,24 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     try {
       // Buscar consumo semanal
       final resultSemanal = await ApiService.getConsumoSemanal();
+      print('DEBUG Semanal result: $resultSemanal');
 
       // Buscar dashboard para estatísticas gerais
       final resultDashboard = await ApiService.getDashboard();
+      print('DEBUG Dashboard result: $resultDashboard');
 
       if (resultSemanal['success'] && resultDashboard['success'] && mounted) {
         final consumoSemanalData = resultSemanal['data'] as List;
         final dashboardData = resultDashboard['data'];
 
+        print('DEBUG consumoSemanalData: $consumoSemanalData');
+        print('DEBUG dashboardData: $dashboardData');
+
         // Converter dados de consumo
         List<Map<String, dynamic>> parsedData = consumoSemanalData.map((item) {
           return {
             'day': item['day'] as String,
-            'kwh': (item['kwh'] ?? 0).toDouble(),
+            'kwh': _parseDouble(item['kwh']),
           };
         }).toList();
 
@@ -59,26 +64,35 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
         // Dados mensais (simulados por agora - em produção viria da API)
         // TODO: Adicionar endpoint para comparação mensal no Laravel
-        double mesAtualCalc =
-            dashboardData['estatisticas']['total_kwh_recarregado'] ?? 0.0;
+        double mesAtualCalc = _parseDouble(
+          dashboardData['estatisticas']['total_kwh_recarregado'],
+        );
         double mesAnteriorCalc =
             mesAtualCalc * 1.08; // 8% a mais no mês anterior
+        print('DEBUG parsedData: $parsedData');
+        print('DEBUG mesAtualCalc: $mesAtualCalc');
 
         setState(() {
           consumptionData = parsedData;
           totalSemanal = total;
           mediaDiaria = media;
-          mesAtual = mesAtualCalc.toDouble();
+          mesAtual = mesAtualCalc;
           mesAnterior = mesAnteriorCalc;
           isLoading = false;
         });
       } else {
+        final errorMsg =
+            resultSemanal['message'] ??
+            resultDashboard['message'] ??
+            'Erro ao carregar dados de análise';
+        print('DEBUG error: $errorMsg');
         setState(() {
           isLoading = false;
-          errorMessage = 'Erro ao carregar dados de análise';
+          errorMessage = errorMsg;
         });
       }
     } catch (e) {
+      print('DEBUG exception in _loadAnalyticsData: $e');
       if (mounted) {
         setState(() {
           isLoading = false;
@@ -90,6 +104,22 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   Future<void> _handleRefresh() async {
     await _loadAnalyticsData();
+  }
+
+  /// Converter valor para double
+  double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) {
+      try {
+        return double.parse(value);
+      } catch (e) {
+        print('DEBUG: Failed to parse double from "$value": $e');
+        return 0.0;
+      }
+    }
+    return 0.0;
   }
 
   @override
@@ -215,8 +245,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     ),
                     const SizedBox(height: 16),
                     ...consumptionData.map((day) {
-                      final percentage =
-                          (day['kwh'] as double) / maxConsumption;
+                      final percentage = maxConsumption > 0
+                          ? ((day['kwh'] as double) / maxConsumption).clamp(
+                              0.0,
+                              1.0,
+                            )
+                          : 0.0;
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: Row(
