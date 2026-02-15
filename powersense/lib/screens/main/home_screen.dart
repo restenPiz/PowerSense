@@ -174,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Alert Banner
-              if (balance < 200)
+              if (balance < 100)
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
