@@ -364,11 +364,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: const Color(0xFF0066CC),
                       onTap: () {
                         // Navegar para tela de recarga
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const RechargeScreen(),
-                          ),
-                        );
                       },
                     ),
                   ),
@@ -382,11 +377,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       outlined: true,
                       onTap: () {
                         // Mudar para tab de analytics (index 1)
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const AnalyticsScreen(),
-                          ),
-                        );
                       },
                     ),
                   ),
