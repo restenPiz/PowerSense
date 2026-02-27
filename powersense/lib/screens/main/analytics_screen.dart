@@ -194,9 +194,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               // Header
               Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.bar_chart,
-                    color: const Color(0xFF0066CC),
+                    color: Color(0xFF0066CC),
                     size: 28,
                   ),
                   const SizedBox(width: 12),
